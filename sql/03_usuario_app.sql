@@ -1,8 +1,8 @@
 -- =====================================================================
 -- Usuario de la aplicación con privilegios mínimos (como en el informe
 -- de la guía 18). El backend se conecta con este usuario, nunca con postgres.
--- ANTES de ejecutar: cambia CAMBIAR_AL_EJECUTAR por la contraseña real
--- y NO hagan commit de ese cambio.
+-- ANTES de ejecutar: cambia CAMBIAR_AL_EJECUTAR por una contraseña real
+-- y NO hagas commit de ese cambio.
 -- =====================================================================
 DO $$
 BEGIN
