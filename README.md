@@ -30,10 +30,14 @@ Requisitos en la EC2: Java 21, Maven y acceso de red a la RDS.
 
 ```bash
 cp .env.example .env      # completar DB_URL, DB_PASSWORD y JWT_SECRET
-./ejecutar.sh ms-usuarios # puerto 8081
+./ejecutar.sh ms-usuarios # puerto 8081 (en una terminal)
+./ejecutar.sh ms-catalogo # puerto 8082 (en otra terminal)
 ```
 
-Swagger de ms-usuarios: `http://IP_PUBLICA_EC2:8081/swagger-ui.html`
+- Swagger de ms-usuarios: `http://IP_PUBLICA_EC2:8081/swagger-ui.html`
+- Swagger de ms-catalogo: `http://IP_PUBLICA_EC2:8082/swagger-ui.html`
+
+Ambos usan el mismo `.env`. ms-catalogo no emite tokens: valida con la misma `JWT_SECRET` los que entrega ms-usuarios.
 
 Al arrancar, ms-usuarios crea los usuarios de prueba si no existen:
 
@@ -58,6 +62,31 @@ Al arrancar, ms-usuarios crea los usuarios de prueba si no existen:
 | DELETE | `/api/v1/usuarios/{id}` | admin (desactiva la cuenta) | 204, 403, 404, 409 |
 | GET | `/api/v1/roles` | admin | 200, 401, 403 |
 
+## Endpoints de ms-catalogo
+
+| Método | Ruta | Acceso | Respuestas |
+| --- | --- | --- | --- |
+| GET | `/api/v1/categorias` | Público | 200 |
+| GET | `/api/v1/productos?categoria=&texto=` | Público | 200 |
+| GET | `/api/v1/productos/{codigo}` | Público | 200, 404 |
+| POST | `/api/v1/productos` | admin | 201, 400, 401, 403, 409 |
+| PUT | `/api/v1/productos/{codigo}` | admin o vendedor | 200, 400, 401, 403, 404 |
+| DELETE | `/api/v1/productos/{codigo}` | admin | 204, 401, 403, 404, 409 (tiene pedidos) |
+| POST | `/api/v1/pedidos` | cliente o contratista | 201, 400, 401, 403, **409 sin stock** |
+| GET | `/api/v1/pedidos` | Con token (los propios; admin y vendedor ven todos) | 200, 401 |
+| GET | `/api/v1/pedidos/{numero}` | Dueño, admin o vendedor | 200, 401, 403, 404 |
+| PATCH | `/api/v1/pedidos/{numero}/estado` | admin o vendedor | 200, 400, 403, 404, **409 transición inválida** |
+| PATCH | `/api/v1/pedidos/{numero}/anular` | Dueño (si está Pendiente), admin o vendedor | 200, 403, 404, 409 |
+| GET | `/api/v1/pedidos/saldo` | contratista | 200, 401, 403 |
+
+### Regla de negocio: el pedido no puede superar el stock
+
+Al crear un pedido, el servicio bloquea las filas de los productos (`SELECT ... FOR UPDATE`), revisa que cada
+cantidad no supere el stock y, si alcanza, descuenta el stock y guarda el pedido en **una sola transacción**.
+Si un producto no alcanza, responde **409** con el detalle y no se guarda nada. El bloqueo evita que dos clientes
+compren al mismo tiempo la última unidad. Precios, total, condición de pago y usuario los calcula el servidor:
+el contratista queda con "Pago pendiente a fin de mes"; el resto, "Pago al retirar o recibir".
+
 Los errores responden siempre `{ "mensaje": "...", "detalles": [...] }`.
 
 ## Seguridad
@@ -78,7 +107,8 @@ Los errores responden siempre `{ "mensaje": "...", "detalles": [...] }`.
 | Modificar usuario | Sí | Sí | No |
 | Listar usuarios | Sí | Sí | No |
 | Eliminar o desactivar usuario | Sí | Sí | No |
-| CRUD de productos | Sí | No | No |
-| Pedidos con control de stock (409) | Sí | No | No |
+| CRUD de productos y categorías | Sí | Sí | No |
+| Pedidos con control de stock (409) | Sí | Sí | No |
+| Cambio de estado, anulación y saldo | Sí | Sí | No |
 
 > Cambiar "Probado" a "Sí" cuando cada operación se pruebe en Swagger contra la base RDS.
