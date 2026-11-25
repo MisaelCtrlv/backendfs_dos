@@ -34,8 +34,8 @@ cp .env.example .env      # completar DB_URL, DB_PASSWORD y JWT_SECRET
 ./ejecutar.sh ms-catalogo # puerto 8082 (en otra terminal)
 ```
 
-- Swagger de ms-usuarios: `http://IP_PUBLICA_EC2:8081/swagger-ui.html`
-- Swagger de ms-catalogo: `http://IP_PUBLICA_EC2:8082/swagger-ui.html`
+- Swagger de ms-usuarios: `http://3.233.70.67/:8081/swagger-ui.html`
+- Swagger de ms-catalogo: `http://3.233.70.67/:8082/swagger-ui.html`
 
 Ambos usan el mismo `.env`. ms-catalogo no emite tokens: valida con la misma `JWT_SECRET` los que entrega ms-usuarios.
 
@@ -101,14 +101,13 @@ Los errores responden siempre `{ "mensaje": "...", "detalles": [...] }`.
 
 | Operación | Diseñado | Implementado | Probado |
 | --- | --- | --- | --- |
-| Tabla de usuarios | Sí | Sí | No |
-| Inicio de sesión (JWT) | Sí | Sí | No |
-| Registro de usuario | Sí | Sí | No |
+| Tabla de usuarios | Sí | Sí | Sí |
+| Inicio de sesión (JWT) | Sí | Sí | Sí |
+| Registro de usuario | Sí | Sí | Sí |
 | Modificar usuario | Sí | Sí | No |
 | Listar usuarios | Sí | Sí | No |
 | Eliminar o desactivar usuario | Sí | Sí | No |
-| CRUD de productos y categorías | Sí | Sí | No |
+| CRUD de productos y categorías | Sí | Sí | Sí |
 | Pedidos con control de stock (409) | Sí | Sí | No |
 | Cambio de estado, anulación y saldo | Sí | Sí | No |
 
-> Cambiar "Probado" a "Sí" cuando cada operación se pruebe en Swagger contra la base RDS.
